@@ -39,7 +39,7 @@ def passprompt():
     return p1
 
 if len(sys.argv) <= 1:
-    print("Usage: {} <dklen>".format(sys.argv[0]), file=sys.stderr)
+    print(f"Usage: {sys.argv[0]} <dklen>", file=sys.stderr)
     sys.exit(1)
 
 hash_name = "sha256"
@@ -53,8 +53,8 @@ dk = hashlib.pbkdf2_hmac(hash_name=hash_name, password=password, salt=salt, iter
 salt_hex = "".join(["{:02x}".format(x) for x in salt])
 dk_hex = "".join(["{:02x}".format(x) for x in dk])
 
-print("KEY=" + dk_hex);
+print(f"KEY={dk_hex}");
 print("algoritm=pbkdf2_hmac");
-print("hash_name=" + hash_name);
-print("salt=" + salt_hex);
-print("iterations=" + str(iterations));
+print(f"hash_name={hash_name}");
+print(f"salt={salt_hex}");
+print(f"iterations={iterations}");

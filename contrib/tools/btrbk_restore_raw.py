@@ -106,8 +106,10 @@ class BtrfsPipeline:
 
     def get_cmd(self, options):
         command_pipe = [['cat', self.bfile.data_file]]
-        for transformer in self.processors:
-            command_pipe.append(transformer.get_cmd(self.bfile, options))
+        command_pipe.extend(
+            transformer.get_cmd(self.bfile, options)
+            for transformer in self.processors
+        )
         command_pipe.append(TransformBtrfsReceive.get_cmd(self.bfile, options))
         return ' | '.join(' '.join(x) for x in command_pipe)
 
@@ -126,7 +128,7 @@ class BackupFile:
         config = {}
         with open(self.info_file, 'r') as fh:
             # skip command option line
-            for line in fh.readlines():
+            for line in fh:
                 if '=' not in line:
                     continue
                 key, val = line.strip().split('=', maxsplit=1)
@@ -161,7 +163,7 @@ class BackupFile:
 def restore_from_path(backup, options):
     path = os.path.dirname(backup)
     info_files = {}
-    backup_file = BackupFile(backup + '.info')
+    backup_file = BackupFile(f'{backup}.info')
     restored_files = set()
     for entry in os.scandir(path):
         if entry.is_file() and entry.name.endswith('.info'):
@@ -175,16 +177,15 @@ def restore_backup(bfile, parents, options):
     if bfile.is_restored:
         return
     if bfile.parent:
-        parent = parents.get(bfile.parent)
-        if not parent:
+        if parent := parents.get(bfile.parent):
+            yield from restore_backup(parent, parents, options)
+        else:
             msg = (f"missing parent {bfile.parent} for"
                    f"'{os.path.basename(bfile.info_file)}'")
             if options.ignore_missing:
                 logger.warning(msg)
             else:
                 raise Exception(msg)
-        else:
-            yield from restore_backup(parent, parents, options)
     bfile.restore_file(options)
     yield bfile.uuid
 
